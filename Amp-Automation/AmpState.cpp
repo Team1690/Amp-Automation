@@ -1,3 +1,6 @@
+#include <iostream>
+using namespace std;
+
 enum AmpState {
     NoNotes, 
     OneNotes, 
@@ -17,11 +20,15 @@ enum AmpEvent {
 
 class ProcessAmp {
 public:
+    // defines deafault event functions, to be overriden by state classes
     virtual AmpState NoteIn(){return AmpState::NoChange;};
     virtual AmpState CoopPressed(){return AmpState::NoChange;};
     virtual AmpState ScoreboardPressed(){return AmpState::NoChange;};
     virtual AmpState AmplifiedPressed(){return AmpState::NoChange;};
-    virtual AmpState ClockTick(){return AmpState::NoChange;};
+    virtual AmpState ClockTick(){
+        cout << "clock has ticked";
+        return AmpState::NoNotes;};
+    // handles change from enum to function
     AmpState HandleEvent(AmpEvent e){
         switch (e)
         {
@@ -42,6 +49,8 @@ public:
         }
     }
 };
+
+// state classes override event functions that they use
 
 class NoNotesHandler : public ProcessAmp {
 public:
@@ -88,36 +97,58 @@ public:
 };
 
 
-int main(){
+class Context{
+public:
+    
+    NoNotesHandler nnhObj;
+    OneNotesHandler onhObj;
+    TwoNotesHandler tnhObj;
+    AmplifiedHandler ahObj;
+    ScoreBoardHandler sbhObj;
     AmpState state = NoNotes;
-    AmpEvent event = ClockTick;
+    int notesIn = 0;
 
-    while(true){
-        state newState = currentState.HandleEvent(event);
+    void HandleEvent(AmpEvent e){
+        if (e == NoteIn){notesIn++;}
         switch (state)
         {
             case AmpState::NoNotes:
-                newState = NoNotesHandler::HandleEvent(event);
+                state = nnhObj.HandleEvent(e);
                 break;
 
             case AmpState::OneNotes:
-                newState = OneNotesHandler::HandleEvent(event);
+                state = onhObj.HandleEvent(e);
                 break;
             
             case AmpState::TwoNotes:
-                newState = TwoNotesHandler::HandleEvent(event);
+                state = tnhObj.HandleEvent(e);
                 break;
             
             case AmpState::Amplified:
-                newState = AmplifiedHandler::HandleEvent(event);
+                state = ahObj.HandleEvent(e);
                 break;
             
             case AmpState::ScoreBoard:
-                newState = ScoreBoardHandler::HandleEvent(event);
+                state = sbhObj.HandleEvent(e);
                 break;
-
-
         }
+        cout << state;
     }
+};
+
+
+
+int main(){
+    // starting values for state & event
+    AmpEvent event = ClockTick;
+    Context c;
+
+
+
+    c.HandleEvent(NoteIn);
+    c.HandleEvent(NoteIn);
+    c.HandleEvent(AmplifiedPressed);
+
+
     return 0;
 }
